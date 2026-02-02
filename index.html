@@ -847,9 +847,15 @@
         const SUPABASE_URL = 'https://uxjgpmxcwqpfvanzbwan.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4amdwbXhjd3FwZnZhbnpid2FuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNjQzNjAsImV4cCI6MjA4NTY0MDM2MH0.rTCutJXHlc9RvbgCtGtONNidBfgacvm7SVh7knoTyK0';
         
-        let supabase = null;
-        let currentUser = null;
+        let supabaseClient = null;
+let currentUser = null;
 
+// Inicializace klienta (pokud jsou hodnoty vyplněné)
+if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+        
         // ===== DEVICE DETECTION =====
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -939,9 +945,9 @@
             errorEl.classList.remove('visible');
             
             try {
-                if (supabase) {
+                if (supabaseClient) {
                     // Supabase authentication
-                    const { data, error } = await supabase.auth.signInWithPassword({
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
                         email: username.includes('@') ? username : username + '@modulive.local',
                         password: password
                     });
@@ -1355,3 +1361,4 @@
     </script>
 </body>
 </html>
+
