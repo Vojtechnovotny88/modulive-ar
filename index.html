@@ -850,11 +850,6 @@
         let supabase = null;
         let currentUser = null;
 
-        // Initialize Supabase if configured
-        if (SUPABASE_URL !== 'https://uxjgpmxcwqpfvanzbwan.supabase.co') {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-
         // ===== DEVICE DETECTION =====
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
