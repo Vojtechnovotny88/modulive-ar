@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>moduLive | AR Vizualizace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --black: #0a0a0a;
+            --white: #ffffff;
+            --gold: #E6C76A;
+            --gold-dark: #c9a94d;
+            --gold-light: rgba(230, 199, 106, 0.1);
+            --gray: #888888;
+            --gray-light: #f5f5f5;
+            --gray-dark: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--black);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== LOGIN SCREEN ===== */
+        #login-screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            background: 
+                radial-gradient(ellipse at 50% 0%, rgba(230, 199, 106, 0.08) 0%, transparent 50%),
+                var(--black);
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+
+        .login-logo {
+            margin-bottom: 15px;
+        }
+
+        .login-logo img {
+            height: 50px;
+            width: auto;
+        }
+
+        .login-slogan {
+            font-size: 0.85rem;
+            color: var(--gold);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 50px;
+            font-weight: 300;
+        }
+
+        .login-box {
+            background: linear-gradient(145deg, #151515 0%, #0d0d0d 100%);
+            border: 1px solid rgba(230, 199, 106, 0.15);
+            border-radius: 20px;
+            padding: 40px 30px;
+        }
+
+        .login-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--white);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--white);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: rgba(230, 199, 106, 0.05);
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: var(--gold);
+            border: none;
+            border-radius: 12px;
+            color: var(--black);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            background: var(--gold-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-error {
+            background: rgba(255, 100, 100, 0.1);
+            border: 1px solid rgba(255, 100, 100, 0.3);
+            color: #ff6b6b;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .login-error.visible {
+            display: block;
+        }
+
+        .login-footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* ===== GALLERY SCREEN ===== */
+        #gallery-screen {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0 40px 0;
+            border-bottom: 1px solid rgba(230, 199, 106, 0.2);
+            margin-bottom: 40px;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .user-info span {
+            color: var(--gold);
+        }
+
+        .btn-logout {
+            padding: 10px 18px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: var(--gray);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .page-title span {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .page-description {
+            color: var(--gray);
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .houses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            flex: 1;
+        }
+
+        .house-card {
+            background: linear-gradient(145deg, #151515 0%, #0d0d0d 100%);
+            border: 1px solid rgba(230, 199, 106, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .house-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--gold);
+            box-shadow: 0 20px 60px rgba(230, 199, 106, 0.15);
+        }
+
+        .house-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--gold-dark));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .house-card:hover::before {
+            opacity: 1;
+        }
+
+        .house-image {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .house-image svg {
+            width: 80px;
+            height: 80px;
+            opacity: 0.4;
+            transition: all 0.3s ease;
+        }
+
+        .house-card:hover .house-image svg {
+            opacity: 0.6;
+            transform: scale(1.1);
+        }
+
+        .house-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .house-info {
+            padding: 20px;
+        }
+
+        .house-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--white);
+        }
+
+        .house-specs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .spec {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .spec span {
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        .btn-ar {
+            width: 100%;
+            padding: 14px 20px;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-ar:hover {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .btn-ar svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .device-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: var(--gold);
+        }
+
+        /* ===== AR SCREEN ===== */
+        #ar-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--black);
+        }
+
+        #ar-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .ar-ui {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .ar-ui > * {
+            pointer-events: auto;
+        }
+
+        .ar-header {
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+        }
+
+        .ar-house-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .ar-house-name span {
+            color: var(--gold);
+        }
+
+        .btn-back {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: var(--gold);
+        }
+
+        .btn-back svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .ar-instructions {
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: var(--white);
+            text-align: center;
+            border: 1px solid rgba(230, 199, 106, 0.3);
+        }
+
+        .ar-instructions.hidden {
+            display: none;
+        }
+
+        .ar-controls {
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 14px;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover, .control-btn.active {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--black);
+        }
+
+        .control-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .scale-display {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: var(--gold);
+            z-index: 1000;
+        }
+
+        /* ===== LOADING ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--black);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(230, 199, 106, 0.2);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* ===== PERMISSION MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: 20px;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal {
+            background: linear-gradient(145deg, #151515 0%, #0d0d0d 100%);
+            border: 1px solid rgba(230, 199, 106, 0.2);
+            border-radius: 20px;
+            padding: 40px 30px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(230, 199, 106, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px auto;
+        }
+
+        .modal-icon svg {
+            width: 35px;
+            height: 35px;
+            color: var(--gold);
+        }
+
+        .modal h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            color: var(--gray);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 16px 30px;
+            background: var(--gold);
+            border: none;
+            border-radius: 12px;
+            color: var(--black);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn:hover {
+            background: var(--gold-dark);
+            transform: scale(1.02);
+        }
+
+        /* ===== ERROR STATE ===== */
+        .error-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 350px;
+            border: 1px solid rgba(255,100,100,0.3);
+            z-index: 3000;
+        }
+
+        .error-message.hidden {
+            display: none;
+        }
+
+        .error-message h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+        }
+
+        .error-message p {
+            color: var(--gray);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* ===== iOS AR Quick Look Link ===== */
+        .ios-ar-link {
+            display: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .page-title {
+                font-size: 1.6rem;
+            }
+
+            .houses-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ar-controls {
+                gap: 10px;
+                padding: 12px 15px;
+            }
+
+            .control-btn {
+                width: 44px;
+                height: 44px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+        <div class="login-container">
+            <div class="login-logo">
+                <img src="https://modulive.cz/wp-content/uploads/2026/02/Logo-png-200px.png" alt="moduLive">
+            </div>
+            <div class="login-slogan">AR vizualizace budoucnosti</div>
+            
+            <div class="login-box">
+                <h2 class="login-title">Přihlášení</h2>
+                
+                <div class="login-error" id="login-error">
+                    Nesprávné přihlašovací údaje
+                </div>
+                
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="username">Uživatelské jméno</label>
+                        <input type="text" id="username" name="username" placeholder="Zadejte jméno" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="password">Heslo</label>
+                        <input type="password" id="password" name="password" placeholder="Zadejte heslo" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-login" id="btn-login">Přihlásit se</button>
+                </form>
+            </div>
+            
+            <div class="login-footer">
+                © 2026 moduLive. Všechna práva vyhrazena.
+            </div>
+        </div>
+    </div>
+
+    <!-- GALLERY SCREEN -->
+    <div id="gallery-screen">
+        <header class="header">
+            <div class="logo">
+                <img src="https://modulive.cz/wp-content/uploads/2026/02/Logo-png-200px.png" alt="moduLive">
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    Přihlášen: <span id="user-display">—</span>
+                </div>
+                <button class="btn-logout" onclick="logout()">Odhlásit</button>
+            </div>
+        </header>
+
+        <h1 class="page-title">Vyberte <span>dům</span></h1>
+        <p class="page-description">Vyberte dům, který chcete zobrazit v rozšířené realitě na pozemku klienta.</p>
+
+        <div class="houses-grid" id="houses-grid">
+            <!-- Houses will be inserted here by JavaScript -->
+        </div>
+    </div>
+
+    <!-- AR SCREEN (for Android WebXR) -->
+    <div id="ar-screen">
+        <div id="ar-container"></div>
+        
+        <div class="ar-ui ar-header">
+            <div class="ar-house-name">
+                <span id="ar-current-house">Dům</span>
+            </div>
+            <button class="btn-back" onclick="closeAR()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="ar-ui ar-instructions" id="ar-instructions">
+            👆 Klepněte na plochu pro umístění domu
+        </div>
+
+        <div class="ar-ui ar-controls">
+            <button class="control-btn" id="btn-rotate-left" title="Otočit doleva">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                </svg>
+            </button>
+            <button class="control-btn" id="btn-rotate-right" title="Otočit doprava">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+            </button>
+            <button class="control-btn" id="btn-scale-down" title="Zmenšit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35M8 11h6"/>
+                </svg>
+            </button>
+            <button class="control-btn" id="btn-scale-up" title="Zvětšit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/>
+                </svg>
+            </button>
+            <button class="control-btn" id="btn-reset" title="Resetovat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="scale-display" id="scale-display">Měřítko: 100%</div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay hidden" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">Načítám...</div>
+    </div>
+
+    <!-- PERMISSION MODAL -->
+    <div class="modal-overlay hidden" id="permission-modal">
+        <div class="modal">
+            <div class="modal-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+            </div>
+            <h2>Povolte přístup ke kameře</h2>
+            <p>Pro zobrazení domu v rozšířené realitě potřebujeme přístup k fotoaparátu vašeho zařízení.</p>
+            <button class="modal-btn" onclick="requestCameraPermission()">Povolit kameru</button>
+        </div>
+    </div>
+
+    <!-- ERROR MESSAGE -->
+    <div class="error-message hidden" id="error-message">
+        <h3>⚠️ Chyba</h3>
+        <p id="error-text">Něco se pokazilo.</p>
+    </div>
+
+    <!-- THREE.JS & AR SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <script>
+        // ===== SUPABASE CONFIG =====
+        // DŮLEŽITÉ: Nahraďte těmito hodnotami z vašeho Supabase projektu
+        const SUPABASE_URL = 'https://uxjgpmxcwqpfvanzbwan.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_EAbIaygdkpQaOBgobsEdjA_Nh7bz8uA';
+        
+        let supabase = null;
+        let currentUser = null;
+
+        // Initialize Supabase if configured
+        if (SUPABASE_URL !== 'https://uxjgpmxcwqpfvanzbwan.supabase.co') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        // ===== DEVICE DETECTION =====
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        // ===== HOUSE DATA =====
+        const houses = [
+            {
+                id: 1,
+                name: "Dům Marian",
+                area: "120 m²",
+                rooms: "4+1",
+                modelGLB: "models/house1.glb",
+                modelUSDZ: "models/house1.usdz",
+                thumbnail: null
+            },
+            {
+                id: 2,
+                name: "Dům Filip",
+                area: "145 m²",
+                rooms: "5+1",
+                modelGLB: "models/house2.glb",
+                modelUSDZ: "models/house2.usdz",
+                thumbnail: null
+            },
+            {
+                id: 3,
+                name: "Dům Tereza",
+                area: "180 m²",
+                rooms: "6+1",
+                modelGLB: "models/house3.glb",
+                modelUSDZ: "models/house3.usdz",
+                thumbnail: null
+            },
+            {
+                id: 4,
+                name: "Dům Compact",
+                area: "95 m²",
+                rooms: "3+1",
+                modelGLB: "models/house4.glb",
+                modelUSDZ: "models/house4.usdz",
+                thumbnail: null
+            },
+            {
+                id: 5,
+                name: "Dům Premium",
+                area: "210 m²",
+                rooms: "6+2",
+                modelGLB: "models/house5.glb",
+                modelUSDZ: "models/house5.usdz",
+                thumbnail: null
+            },
+            {
+                id: 6,
+                name: "Dům Eco",
+                area: "135 m²",
+                rooms: "4+1",
+                modelGLB: "models/house6.glb",
+                modelUSDZ: "models/house6.usdz",
+                thumbnail: null
+            }
+        ];
+
+        // ===== STATE =====
+        let currentHouse = null;
+        let scene, camera, renderer;
+        let houseModel = null;
+        let isARActive = false;
+        let modelScale = 1;
+        let modelRotation = 0;
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
+        let reticle = null;
+        let modelPlaced = false;
+
+        // ===== LOGIN FUNCTIONS =====
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('btn-login');
+            const errorEl = document.getElementById('login-error');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Přihlašuji...';
+            errorEl.classList.remove('visible');
+            
+            try {
+                if (supabase) {
+                    // Supabase authentication
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: username.includes('@') ? username : username + '@modulive.local',
+                        password: password
+                    });
+                    
+                    if (error) throw error;
+                    
+                    currentUser = data.user.email.replace('@modulive.local', '');
+                } else {
+                    // Demo mode - accept any login for testing
+                    console.warn('Supabase not configured - running in demo mode');
+                    currentUser = username;
+                }
+                
+                showGallery();
+            } catch (error) {
+                console.error('Login error:', error);
+                errorEl.textContent = 'Nesprávné přihlašovací údaje';
+                errorEl.classList.add('visible');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Přihlásit se';
+            }
+        });
+
+        function showGallery() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('gallery-screen').style.display = 'flex';
+            document.getElementById('user-display').textContent = currentUser;
+            renderGallery();
+        }
+
+        async function logout() {
+            if (supabase) {
+                await supabase.auth.signOut();
+            }
+            currentUser = null;
+            document.getElementById('gallery-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Check for existing session on load
+        async function checkSession() {
+            if (supabase) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    currentUser = session.user.email.replace('@modulive.local', '');
+                    showGallery();
+                }
+            }
+        }
+
+        // ===== RENDER GALLERY =====
+        function renderGallery() {
+            const grid = document.getElementById('houses-grid');
+            const deviceType = isIOS ? 'iOS' : (isAndroid ? 'Android' : 'Desktop');
+            
+            grid.innerHTML = houses.map(house => `
+                <div class="house-card" onclick="selectHouse(${house.id})">
+                    <div class="house-image">
+                        <span class="device-badge">${deviceType}</span>
+                        ${house.thumbnail 
+                            ? `<img src="${house.thumbnail}" alt="${house.name}">`
+                            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                               </svg>`
+                        }
+                    </div>
+                    <div class="house-info">
+                        <h3 class="house-name">${house.name}</h3>
+                        <div class="house-specs">
+                            <span class="spec"><span>${house.area}</span></span>
+                            <span class="spec"><span>${house.rooms}</span></span>
+                        </div>
+                        <button class="btn-ar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            Zobrazit v AR
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== SELECT HOUSE =====
+        function selectHouse(id) {
+            currentHouse = houses.find(h => h.id === id);
+            document.getElementById('ar-current-house').textContent = currentHouse.name;
+            
+            if (isIOS) {
+                // iOS - use AR Quick Look
+                launchIOSAR();
+            } else {
+                // Android - use WebXR
+                checkARSupport();
+            }
+        }
+
+        // ===== iOS AR QUICK LOOK =====
+        function launchIOSAR() {
+            const modelUrl = currentHouse.modelUSDZ;
+            
+            // Create temporary anchor for AR Quick Look
+            const anchor = document.createElement('a');
+            anchor.setAttribute('rel', 'ar');
+            anchor.setAttribute('href', modelUrl);
+            
+            // Add a child img element (required by AR Quick Look)
+            const img = document.createElement('img');
+            img.src = '';
+            anchor.appendChild(img);
+            
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
+
+        // ===== CHECK AR SUPPORT (Android) =====
+        async function checkARSupport() {
+            if (!navigator.xr) {
+                showError("Váš prohlížeč nepodporuje WebXR. Zkuste Chrome na Android zařízení.");
+                return;
+            }
+
+            try {
+                const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                if (supported) {
+                    document.getElementById('permission-modal').classList.remove('hidden');
+                } else {
+                    showError("Vaše zařízení nepodporuje AR. Zkuste novější Android telefon s ARCore.");
+                }
+            } catch (e) {
+                showError("Nepodařilo se ověřit podporu AR: " + e.message);
+            }
+        }
+
+        // ===== REQUEST CAMERA PERMISSION =====
+        async function requestCameraPermission() {
+            document.getElementById('permission-modal').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = 'Spouštím AR...';
+            
+            try {
+                await startAR();
+            } catch (e) {
+                document.getElementById('loading').classList.add('hidden');
+                showError("Nepodařilo se spustit AR: " + e.message);
+            }
+        }
+
+        // ===== START AR =====
+        async function startAR() {
+            document.getElementById('gallery-screen').style.display = 'none';
+            document.getElementById('ar-screen').style.display = 'block';
+
+            // Setup Three.js
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true;
+            document.getElementById('ar-container').appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 10);
+            scene.add(directionalLight);
+
+            // Create reticle (placement indicator)
+            const reticleGeometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2);
+            const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0xE6C76A });
+            reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
+            reticle.visible = false;
+            reticle.matrixAutoUpdate = false;
+            scene.add(reticle);
+
+            // Start XR session
+            const session = await navigator.xr.requestSession('immersive-ar', {
+                requiredFeatures: ['hit-test'],
+                optionalFeatures: ['dom-overlay'],
+                domOverlay: { root: document.getElementById('ar-screen') }
+            });
+
+            renderer.xr.setReferenceSpaceType('local');
+            await renderer.xr.setSession(session);
+
+            session.addEventListener('select', onSelect);
+            session.addEventListener('end', onSessionEnd);
+
+            document.getElementById('loading').classList.add('hidden');
+            isARActive = true;
+
+            // Setup controls
+            setupControls();
+
+            // Animation loop
+            renderer.setAnimationLoop(render);
+        }
+
+        // ===== RENDER LOOP =====
+        function render(timestamp, frame) {
+            if (frame && !modelPlaced) {
+                const referenceSpace = renderer.xr.getReferenceSpace();
+                const session = renderer.xr.getSession();
+
+                if (!hitTestSourceRequested) {
+                    session.requestReferenceSpace('viewer').then(viewerSpace => {
+                        session.requestHitTestSource({ space: viewerSpace }).then(source => {
+                            hitTestSource = source;
+                        });
+                    });
+                    hitTestSourceRequested = true;
+                }
+
+                if (hitTestSource) {
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+                    } else {
+                        reticle.visible = false;
+                    }
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // ===== ON SELECT (PLACE MODEL) =====
+        async function onSelect() {
+            if (reticle.visible && !modelPlaced) {
+                document.getElementById('loading').classList.remove('hidden');
+                document.getElementById('loading-text').textContent = 'Načítám 3D model...';
+                
+                const loader = new THREE.GLTFLoader();
+                
+                try {
+                    // Try to load actual model, fallback to demo object
+                    try {
+                        const gltf = await new Promise((resolve, reject) => {
+                            loader.load(currentHouse.modelGLB, resolve, undefined, reject);
+                        });
+                        houseModel = gltf.scene;
+                    } catch (e) {
+                        // Create demo object if model not found
+                        houseModel = createDemoHouse();
+                    }
+
+                    houseModel.position.setFromMatrixPosition(reticle.matrix);
+                    houseModel.scale.set(modelScale, modelScale, modelScale);
+                    scene.add(houseModel);
+                    
+                    modelPlaced = true;
+                    reticle.visible = false;
+                    document.getElementById('ar-instructions').classList.add('hidden');
+                    document.getElementById('loading').classList.add('hidden');
+                } catch (e) {
+                    console.error("Error loading model:", e);
+                    document.getElementById('loading').classList.add('hidden');
+                    showError("Nepodařilo se načíst 3D model.");
+                }
+            }
+        }
+
+        // ===== CREATE DEMO HOUSE =====
+        function createDemoHouse() {
+            const group = new THREE.Group();
+
+            // Main building
+            const baseGeometry = new THREE.BoxGeometry(2, 1, 1.5);
+            const baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const base = new THREE.Mesh(baseGeometry, baseMaterial);
+            base.position.y = 0.5;
+            group.add(base);
+
+            // Roof
+            const roofGeometry = new THREE.ConeGeometry(1.5, 0.8, 4);
+            const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.position.y = 1.4;
+            roof.rotation.y = Math.PI / 4;
+            group.add(roof);
+
+            // Door
+            const doorGeometry = new THREE.BoxGeometry(0.3, 0.6, 0.05);
+            const doorMaterial = new THREE.MeshStandardMaterial({ color: 0xE6C76A });
+            const door = new THREE.Mesh(doorGeometry, doorMaterial);
+            door.position.set(0, 0.3, 0.77);
+            group.add(door);
+
+            // Windows
+            const windowGeometry = new THREE.BoxGeometry(0.25, 0.25, 0.05);
+            const windowMaterial = new THREE.MeshStandardMaterial({ color: 0x87CEEB });
+            
+            const window1 = new THREE.Mesh(windowGeometry, windowMaterial);
+            window1.position.set(-0.5, 0.6, 0.77);
+            group.add(window1);
+
+            const window2 = new THREE.Mesh(windowGeometry, windowMaterial);
+            window2.position.set(0.5, 0.6, 0.77);
+            group.add(window2);
+
+            return group;
+        }
+
+        // ===== SETUP CONTROLS =====
+        function setupControls() {
+            document.getElementById('btn-rotate-left').addEventListener('click', () => {
+                if (houseModel) {
+                    modelRotation -= Math.PI / 8;
+                    houseModel.rotation.y = modelRotation;
+                }
+            });
+
+            document.getElementById('btn-rotate-right').addEventListener('click', () => {
+                if (houseModel) {
+                    modelRotation += Math.PI / 8;
+                    houseModel.rotation.y = modelRotation;
+                }
+            });
+
+            document.getElementById('btn-scale-down').addEventListener('click', () => {
+                if (houseModel && modelScale > 0.25) {
+                    modelScale -= 0.25;
+                    houseModel.scale.set(modelScale, modelScale, modelScale);
+                    updateScaleDisplay();
+                }
+            });
+
+            document.getElementById('btn-scale-up').addEventListener('click', () => {
+                if (houseModel && modelScale < 3) {
+                    modelScale += 0.25;
+                    houseModel.scale.set(modelScale, modelScale, modelScale);
+                    updateScaleDisplay();
+                }
+            });
+
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                if (houseModel) {
+                    modelScale = 1;
+                    modelRotation = 0;
+                    houseModel.scale.set(1, 1, 1);
+                    houseModel.rotation.y = 0;
+                    updateScaleDisplay();
+                }
+            });
+        }
+
+        function updateScaleDisplay() {
+            document.getElementById('scale-display').textContent = `Měřítko: ${Math.round(modelScale * 100)}%`;
+        }
+
+        // ===== ON SESSION END =====
+        function onSessionEnd() {
+            isARActive = false;
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+            modelPlaced = false;
+            
+            if (houseModel) {
+                scene.remove(houseModel);
+                houseModel = null;
+            }
+        }
+
+        // ===== CLOSE AR =====
+        function closeAR() {
+            const session = renderer?.xr?.getSession();
+            if (session) {
+                session.end();
+            }
+            
+            document.getElementById('ar-screen').style.display = 'none';
+            document.getElementById('gallery-screen').style.display = 'flex';
+            
+            // Cleanup
+            if (renderer) {
+                renderer.dispose();
+                const container = document.getElementById('ar-container');
+                while (container.firstChild) {
+                    container.removeChild(container.firstChild);
+                }
+            }
+            
+            modelScale = 1;
+            modelRotation = 0;
+            modelPlaced = false;
+            updateScaleDisplay();
+        }
+
+        // ===== SHOW ERROR =====
+        function showError(message) {
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('error-message').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('error-message').classList.add('hidden');
+            }, 5000);
+        }
+
+        // ===== INIT =====
+        checkSession();
+    </script>
+</body>
+</html>
