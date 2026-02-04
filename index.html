@@ -860,6 +860,24 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const isAndroid = /Android/.test(navigator.userAgent);
+
+        // ===== MODEL STORAGE CONFIG =====
+        // Pokud je prázdné, načítají se lokální soubory z /models
+        // Příklad: 'https://models.modulive.cz'
+        const MODEL_FILES_BASE_URL = 'https://pub-9943dd95a0bc42b2a98b2c862e941f36.r2.dev';
+
+        function resolveModelUrl(modelFile) {
+            if (!modelFile) return '';
+            if (/^https?:\/\//i.test(modelFile)) return modelFile;
+
+            const cleanedFile = modelFile.replace(/^\.?\//, '').replace(/^models\//, '');
+
+            if (MODEL_FILES_BASE_URL) {
+                return `${MODEL_FILES_BASE_URL.replace(/\/+$/, '')}/${cleanedFile}`;
+            }
+
+            return `models/${cleanedFile}`;
+        }
         
         // ===== HOUSE DATA =====
         const houses = [
@@ -868,8 +886,8 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
                 name: "Dům Marian",
                 area: "120 m²",
                 rooms: "4+1",
-                modelGLB: "models/house1.glb",
-                modelUSDZ: "models/house1.usdz",
+                modelGLB: "house1.glb",
+                modelUSDZ: "house1.usdz",
                 thumbnail: null
             },
             {
@@ -877,8 +895,8 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
                 name: "Dům Filip",
                 area: "145 m²",
                 rooms: "5+1",
-                modelGLB: "models/house2.glb",
-                modelUSDZ: "models/house2.usdz",
+                modelGLB: "house2.glb",
+                modelUSDZ: "house2.usdz",
                 thumbnail: null
             },
             {
@@ -886,8 +904,8 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
                 name: "Dům Tereza",
                 area: "180 m²",
                 rooms: "6+1",
-                modelGLB: "models/house3.glb",
-                modelUSDZ: "models/house3.usdz",
+                modelGLB: "house3.glb",
+                modelUSDZ: "house3.usdz",
                 thumbnail: null
             },
             {
@@ -895,8 +913,8 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
                 name: "Dům Compact",
                 area: "95 m²",
                 rooms: "3+1",
-                modelGLB: "models/house4.glb",
-                modelUSDZ: "models/house4.usdz",
+                modelGLB: "house4.glb",
+                modelUSDZ: "house4.usdz",
                 thumbnail: null
             },
             {
@@ -904,8 +922,8 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
                 name: "Dům Premium",
                 area: "210 m²",
                 rooms: "6+2",
-                modelGLB: "models/house5.glb",
-                modelUSDZ: "models/house5.usdz",
+                modelGLB: "house5.glb",
+                modelUSDZ: "house5.usdz",
                 thumbnail: null
             },
             {
@@ -913,8 +931,8 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
                 name: "Dům Eco",
                 area: "135 m²",
                 rooms: "4+1",
-                modelGLB: "models/house6.glb",
-                modelUSDZ: "models/house6.usdz",
+                modelGLB: "house6.glb",
+                modelUSDZ: "house6.usdz",
                 thumbnail: null
             }
         ];
@@ -1051,7 +1069,7 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
 
         // ===== iOS AR QUICK LOOK =====
         function launchIOSAR() {
-            const modelUrl = currentHouse.modelUSDZ;
+            const modelUrl = resolveModelUrl(currentHouse.modelUSDZ);
             
             // Create temporary anchor for AR Quick Look
             const anchor = document.createElement('a');
@@ -1197,7 +1215,7 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
                     // Try to load actual model, fallback to demo object
                     try {
                         const gltf = await new Promise((resolve, reject) => {
-                            loader.load(currentHouse.modelGLB, resolve, undefined, reject);
+                            loader.load(resolveModelUrl(currentHouse.modelGLB), resolve, undefined, reject);
                         });
                         houseModel = gltf.scene;
                     } catch (e) {
